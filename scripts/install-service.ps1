@@ -10,6 +10,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+
+
 function Assert-Admin {
     $currentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($currentIdentity)
@@ -74,12 +76,31 @@ function Ensure-EventSource {
     }
 }
 
+function Store-ServiceCredentials {
+    param(
+        [string]$UserName,
+        [string]$Password
+    )
+
+    $fullUser = "$env:COMPUTERNAME\$UserName"
+
+    $keyPath = "HKLM:\SOFTWARE\AppElevator"
+    if (-not (Test-Path $keyPath)) {
+        New-Item -Path $keyPath -Force | Out-Null
+    }
+
+    New-ItemProperty -Path $keyPath -Name ServiceUser -Value $fullUser -PropertyType String -Force | Out-Null
+    New-ItemProperty -Path $keyPath -Name ServicePasswordPlain -Value $Password -PropertyType String -Force | Out-Null
+}
+
 Assert-Admin
 Ensure-UserExists -UserName $UserName
 Grant-UserRight -UserName $UserName -RightName "SeServiceLogonRight"
+Grant-UserRight -UserName $UserName -RightName "SeInteractiveLogonRight"
 Grant-UserRight -UserName $UserName -RightName "SeTcbPrivilege"
 Grant-UserRight -UserName $UserName -RightName "SeAssignPrimaryTokenPrivilege"
 Grant-UserRight -UserName $UserName -RightName "SeIncreaseQuotaPrivilege"
+Grant-UserRight -UserName $UserName -RightName "SeDebugPrivilege"
 Ensure-EventSource -EventSource $EventSource
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -105,14 +126,16 @@ if (-not $Password) {
     $Password = ConvertTo-UnsecureString -SecureString $secure
 }
 
+Store-ServiceCredentials -UserName $UserName -Password $Password
+
 $binaryPath = '"' + $exePath + '"'
 $existing = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
 if ($existing) {
     Stop-Service -Name $ServiceName -Force -ErrorAction SilentlyContinue
-    sc.exe config $ServiceName binPath= $binaryPath obj= ".\$UserName" password= "$Password" DisplayName= "$DisplayName" start= auto | Out-Null
+    sc.exe config $ServiceName binPath= $binaryPath obj= "LocalSystem" DisplayName= "$DisplayName" start= auto | Out-Null
 }
 else {
-    sc.exe create $ServiceName binPath= $binaryPath obj= ".\$UserName" password= "$Password" DisplayName= "$DisplayName" start= auto | Out-Null
+    sc.exe create $ServiceName binPath= $binaryPath obj= "LocalSystem" DisplayName= "$DisplayName" start= auto | Out-Null
 }
 
 sc.exe description $ServiceName "Launches cmd.exe on event log trigger." | Out-Null

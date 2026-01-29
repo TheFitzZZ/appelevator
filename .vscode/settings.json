@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^powershell -NoProfile -ExecutionPolicy Bypass -File \"c:\\\\Users\\\\chrsch\\\\repos\\\\appelevator\\\\scripts\\\\install-service\\.ps1\" -ServiceName AppElevator -EventSource AppElevator -Password \"OAQZr70lS3HKKJOAQZr70lS3HKKJ\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^pwsh -NoProfile -Command \"Get-Process notepad -ErrorAction SilentlyContinue \\| Select-Object -First 1 \\| Format-List Id,SessionId,StartTime,MainWindowTitle\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

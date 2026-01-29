@@ -17,7 +17,8 @@ AppElevator is a Windows 10/11 service that listens for a specific Event Log ent
 - **Service name**: `AppElevator`
 - **Trigger**: Event Log entry (Application log, source `AppElevator`, Event ID `1001`).
 - **Service logs**: Event ID `1000` (same source), so service logging never retriggers the launch.
-- **Launch mechanism**: `CreateProcessAsUser` using the active console session token.
+- **Service account**: `LocalSystem` (needed to adjust session tokens).
+- **Launch mechanism**: `LogonUser` + `CreateProcessAsUser` to run `cmd.exe` as `localadm` in the active session.
 
 ### Installer Script
 - **Script**: `scripts/install-service.ps1`
@@ -25,6 +26,7 @@ AppElevator is a Windows 10/11 service that listens for a specific Event Log ent
 - Grants the `SeServiceLogonRight` to `localadm`.
 - Creates/updates the Windows service to run under `localadm`.
 - Ensures the Event Log source exists.
+- Stores `localadm` credentials in HKLM for interactive launch.
 
 ### Trigger Script
 - **Script**: `scripts/trigger-event.ps1`
@@ -44,5 +46,5 @@ AppElevator is a Windows 10/11 service that listens for a specific Event Log ent
 
 ## Security Notes
 - Service runs under `localadm`, which must be a local administrator.
-- The service enables `SeAssignPrimaryTokenPrivilege` and `SeIncreaseQuotaPrivilege` to spawn an interactive process.
+- The service enables `SeTcbPrivilege`, `SeAssignPrimaryTokenPrivilege`, `SeIncreaseQuotaPrivilege`, and `SeDebugPrivilege` to obtain the active user token and spawn an interactive process.
 - The Event Log trigger is restricted by event source and event ID filters.

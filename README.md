@@ -22,8 +22,11 @@ Run as Administrator:
 The script:
 - Builds the service.
 - Grants “Log on as a service” to `localadm`.
-- Creates or updates the service to run as `localadm`.
+- Grants “Allow log on locally” to `localadm`.
+- Grants required privileges for interactive launch (`SeTcbPrivilege`, `SeAssignPrimaryTokenPrivilege`, `SeIncreaseQuotaPrivilege`, `SeDebugPrivilege`).
+- Creates or updates the service to run as `LocalSystem` (so it can adjust session tokens).
 - Ensures the Event Log source exists.
+- Stores `localadm` credentials in HKLM for launching `cmd.exe` as `localadm` in the active session.
 
 ## Trigger the Service
 Run as Administrator:

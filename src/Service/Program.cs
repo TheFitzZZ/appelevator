@@ -100,7 +100,7 @@ internal sealed class AppElevatorService : ServiceBase
                 }
 
                 WriteServiceLog("Trigger event received. Launching cmd.exe in active session.");
-                InteractiveLaunch.LaunchInActiveSession("cmd.exe");
+                InteractiveLaunch.LaunchInActiveSession("cmd.exe /k", createConsole: true);
             }
             catch (Exception ex)
             {
